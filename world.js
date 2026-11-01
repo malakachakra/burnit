@@ -1,13 +1,18 @@
 /* world.js — the whole scene drawn by one fragment shader from a first-person camera:
    sky, stars, horizon fog, the ground scrolling under you as you walk, the pit, the coals,
    the fire, its smoke and heat. A second pass draws the pit's near flames over the paper. */
+let World_error = null;
 const World = (() => {
   const back = document.getElementById('world');
   const front = document.getElementById('world-front');
 
   const VS = 'attribute vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }';
   const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
+#else
+precision mediump float;
+#endif
 uniform vec2 uRes;
 uniform float uTime, uHorizon, uWind, uLevel, uFlare, uFront, uWalk, uSway, uGlow, uFH;
 uniform vec4 uPit;    // cx, cy, rx, ry  (canvas px, y down)
@@ -63,7 +68,7 @@ float row(vec2 frag, float k, float seed, float hgt, float top){
 }
 
 void addFlame(inout vec3 col, float d){
-  col = col*(1.0 - d*0.5) + ramp(d)*d*1.1 + vec3(1.0,0.93,0.78)*pow(d, 3.0)*0.3;
+  col = col*(1.0 - d*0.5) + ramp(d)*d*1.1 + vec3(1.0,0.93,0.78)*pow(max(d, 0.0), 3.0)*0.3;
 }
 
 void main(){
@@ -74,8 +79,8 @@ void main(){
     float d1 = row(frag, 0.38, 2.7, 0.62, 1.2);
     float d2 = row(frag, 0.82, 4.2, 0.42, 1.0);
     vec3 c = vec3(0.0); float a = 0.0;
-    c = c*(1.0 - d1*0.5) + ramp(d1)*d1*1.1 + vec3(1.0,0.93,0.78)*pow(d1,3.0)*0.3; a = a*(1.0 - d1*0.5) + d1*0.6;
-    c = c*(1.0 - d2*0.5) + ramp(d2)*d2*1.1 + vec3(1.0,0.93,0.78)*pow(d2,3.0)*0.3; a = a*(1.0 - d2*0.5) + d2*0.6;
+    c = c*(1.0 - d1*0.5) + ramp(d1)*d1*1.1 + vec3(1.0,0.93,0.78)*pow(max(d1, 0.0), 3.0)*0.3; a = a*(1.0 - d1*0.5) + d1*0.6;
+    c = c*(1.0 - d2*0.5) + ramp(d2)*d2*1.1 + vec3(1.0,0.93,0.78)*pow(max(d2, 0.0), 3.0)*0.3; a = a*(1.0 - d2*0.5) + d2*0.6;
     c = 1.0 - exp(-c*1.35);
     gl_FragColor = vec4(c*min(a, 1.0), min(a, 1.0));
     return;
@@ -103,7 +108,8 @@ void main(){
     col += vec3(0.7,0.75,0.9) * smoothstep(1.6, 0.0, dd) * (0.15 + 0.35*tw) * (1.0 - st);
   }
   // fog on the horizon, drifting with the wind
-  float fogb = exp(-pow((bg.y - h)/(uRes.y*0.08), 2.0));
+  float fz = (bg.y - h)/(uRes.y*0.08);
+  float fogb = exp(-fz*fz);
   col = mix(col, vec3(0.13,0.14,0.17), fogb*0.5);
   float drift = fbm(vec2(sky.x*0.0025 - uTime*0.02 - uWind*0.03, sky.y*0.01));
   col = mix(col, vec3(0.12,0.13,0.16), fogb*drift*0.5);
@@ -145,8 +151,8 @@ void main(){
     float pulse = 0.55 + 0.45*sin(uTime*1.4 + coal*16.0 + big*6.0);
     float centre = smoothstep(0.95, 0.1, e);
     float alive = smoothstep(0.3, 0.65, big)*(0.45 + centre*0.55);
-    float hot = pow(coal, 3.5)*3.4*smoothstep(0.45, 0.8, cracks)*pulse*alive*(0.3 + uLevel*0.7 + uFlare*0.6);
-    hot += pow(noise(cp*14.0 + vec2(uTime*0.3, 0.0)), 7.0)*alive*2.5*(0.5 + 0.5*pulse);   // embers in the ash
+    float hot = pow(max(coal, 0.0), 3.5)*3.4*smoothstep(0.45, 0.8, cracks)*pulse*alive*(0.3 + uLevel*0.7 + uFlare*0.6);
+    hot += pow(max(noise(cp*14.0 + vec2(uTime*0.3, 0.0)), 0.0), 7.0)*alive*2.5*(0.5 + 0.5*pulse);   // embers in the ash
     float char = noise(cp*8.0);
     vec3 coals = vec3(0.028,0.016,0.012)*(0.5 + char*0.9);
     coals = mix(coals, vec3(0.85,0.2,0.02), clamp(hot,0.0,1.0)) + vec3(1.0,0.62,0.2)*clamp(hot-0.75,0.0,1.0)*1.1;
@@ -186,7 +192,7 @@ void main(){
     const sh = (type, src) => {
       const s = gl.createShader(type);
       gl.shaderSource(s, src); gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('shader:', gl.getShaderInfoLog(s));
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error('shader:', gl.getShaderInfoLog(s)); World_error = gl.getShaderInfoLog(s); }
       gl.attachShader(prog, s);
     };
     sh(gl.VERTEX_SHADER, VS); sh(gl.FRAGMENT_SHADER, FS);
@@ -280,7 +286,7 @@ void main(){
 
   return {
     tick, cam,
-    ok,
+    ok, error: () => World_error,
     pit() { return { x: geo.cx, y: geo.pitY, rx: geo.rx, ry: geo.ry, fh: geo.fh, horizon: geo.horizon }; },
     wind() { return wind; },
     level() { return level; },
