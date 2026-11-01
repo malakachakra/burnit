@@ -145,6 +145,13 @@
 
   // ---- opening: out of black, the fire wakes ----
   setTimeout(() => { fade.classList.remove('is-on'); World.wake(); }, 350);
+  if (!World.ok) {
+    // no webgl: the browser has it switched off (hardware acceleration, or a privacy extension)
+    const p = document.createElement('p');
+    p.className = 'hint nogl';
+    p.textContent = 'the fire needs webgl, and this browser has it switched off. turn on hardware acceleration, or try another browser.';
+    document.body.appendChild(p);
+  }
 
   // ---- weather ----
   (function windLoop() {

@@ -186,7 +186,8 @@ void main(){
 
   const NAMES = ['uRes', 'uTime', 'uHorizon', 'uWind', 'uLevel', 'uFlare', 'uFront', 'uWalk', 'uSway', 'uGlow', 'uFH', 'uPit'];
   function makeGL(canvas, alpha) {
-    const gl = canvas.getContext('webgl', { alpha, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
+    const opts = { alpha, premultipliedAlpha: true, antialias: false, depth: false, stencil: false };
+    const gl = canvas.getContext('webgl', opts) || canvas.getContext('experimental-webgl', opts);
     if (!gl) return null;
     const prog = gl.createProgram();
     const sh = (type, src) => {
