@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>burn it</title>
+<meta name="description" content="write it down, throw it in the fire, watch it go.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Archivo+Narrow:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scene" aria-hidden="true">
+  <canvas id="world"></canvas>
+  <canvas id="burn"></canvas>
+  <canvas id="world-front"></canvas>
+  <canvas id="fire-front"></canvas>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+</div>
+
+<!-- first person: your hands holding the sheet up to the fire -->
+<div class="pov" id="pov">
+  <svg class="hand hand-l" viewBox="0 0 200 330" aria-hidden="true">
+    <g transform="translate(98 352) rotate(-7)">
+      <path class="rim bone" filter="url(#sack-s)"/>
+      <path class="dark bone" filter="url(#sack-s)"/>
+      <path class="seam"/>
+      <path class="tick"/>
+    </g>
+  </svg>
+  <svg class="hand hand-r" viewBox="0 0 200 330" aria-hidden="true">
+    <g transform="translate(98 352) rotate(-7)">
+      <path class="rim bone" filter="url(#sack-s)"/>
+      <path class="dark bone" filter="url(#sack-s)"/>
+      <path class="seam"/>
+      <path class="tick"/>
+    </g>
+  </svg>
+
+  <form class="note" id="note" autocomplete="off">
+    <label class="sr-only" for="msg">write it down</label>
+    <div class="sheet">
+      <textarea id="msg" maxlength="400" rows="7" placeholder="write it down." spellcheck="false"></textarea>
+    </div>
+    <svg class="thumb thumb-l" viewBox="0 0 70 90" aria-hidden="true">
+      <path d="M10 88 C2 60 6 28 20 10 C28 0 42 2 46 14 C50 34 44 60 32 80 C26 90 14 92 10 88 Z"/>
+    </svg>
+    <svg class="thumb thumb-r" viewBox="0 0 70 90" aria-hidden="true">
+      <path d="M10 88 C2 60 6 28 20 10 C28 0 42 2 46 14 C50 34 44 60 32 80 C26 90 14 92 10 88 Z"/>
+    </svg>
+    <div class="note-row">
+      <button id="burn-btn" type="submit" disabled>burn it</button>
+      <span class="count" id="count" aria-hidden="true"></span>
+    </div>
+  </form>
+</div>
+
+<!-- your throwing arm, from the bottom right -->
+<svg id="arm-svg" class="arm" aria-hidden="true"></svg>
+
+<div class="fade is-on" id="fade" aria-hidden="true"></div>
+
+<button id="mute" class="mute" type="button" aria-pressed="false" aria-label="mute sound">
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+    <path class="speaker" d="M4 9v6h4l5 4V5L8 9H4z"/>
+    <path class="wave" d="M16 8.5a4.5 4.5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" fill="none" stroke-width="1.6" stroke-linecap="round"/>
+    <path class="cross" d="M16 9l6 6M22 9l-6 6" fill="none" stroke-width="1.6" stroke-linecap="round"/>
+  </svg>
+</button>
+
+<p id="sound-hint" class="hint">click anywhere for sound</p>
+
+<script src="world.js"></script>
+<script src="fire.js"></script>
+<script src="arm.js"></script>
+<script src="burn.js"></script>
+<script src="audio.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
